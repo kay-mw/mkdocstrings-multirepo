@@ -14,6 +14,7 @@ uv add mkdockyard
 [mkdocstrings](https://mkdocstrings.github.io/) to be installed and configured.
 
 > [!IMPORTANT]
+>
 > `mkdockyard` must be listed **before** `mkdocstrings` in your `plugins`
 > configuration, as it needs to set up repository paths before mkdocstrings
 > processes them.
@@ -88,7 +89,7 @@ This is unlikely to be a `mkdockyard` problem, as `mkdockyard` only takes
 milliseconds to build when using cached repos (though performance suggestions /
 improvements are always welcome).
 
-### Wh am I getting "Could not collect" errors when trying to document a cloned repo?
+### Why am I getting "Could not collect" errors when trying to document a cloned repo?
 
 This could be for a variety of reasons, such as not using the correct naming
 scheme, misspelling a path, etc.
