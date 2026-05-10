@@ -25,5 +25,5 @@
 !src/
 !src/*.py
 
-!src/mkdockyard
-!src/mkdockyard/*.py
+!src/mkdocstrings_multirepo
+!src/mkdocstrings_multirepo/*.py

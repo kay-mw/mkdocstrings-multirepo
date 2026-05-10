@@ -1,10 +1,10 @@
 [project]
-name = "mkdockyard"
+name = "mkdocstrings-multirepo"
 version = "0.1.0"
 authors = [
   { name="kay-mw" },
 ]
-description = "Allows for the integration of multiple repos into a single mkdocs instance - no git submodules required. The repos are coming to dock 🚢"
+description = "Allows for the integration of multiple repos into a single mkdocs instance - no git submodules required."
 readme = "README.md"
 requires-python = ">=3.10"
 classifiers = [
@@ -19,7 +19,7 @@ dependencies = [
 ]
 
 [project.entry-points."mkdocs.plugins"]
-mkdockyard = "mkdockyard.main:MkdockyardPlugin"
+mkdocstrings-multirepo = "mkdocstrings_multirepo.main:MkdocstringsMultirepoPlugin"
 
 [build-system]
 requires = ["uv_build >= 0.9.26, <0.10.0"]

@@ -47,7 +47,7 @@ class _Repos(base.Config):
 
     name = c.Type(str)
     """
-    The name of the repo. This parameter determines what name prefix to use when 
+    The name of the repo. This parameter determines what name prefix to use when
     referencing files from this repo in your documentation.
 
     Example: 'textual'
@@ -56,7 +56,7 @@ class _Repos(base.Config):
 
     url = c.Type(str)
     """
-    The `.git` URL of the repo. 
+    The `.git` URL of the repo.
 
     Example: 'https://github.com/Textualize/textual.git'
     """
@@ -81,8 +81,8 @@ class _Repos(base.Config):
     """
 
 
-class MkdockyardConfig(base.Config):
-    """Mkdockyard configuration options."""
+class MkdocstringsMultirepoConfig(base.Config):
+    """mkdocstrings-multirepo configuration options."""
 
     repos = c.ListOfItems(c.SubConfig(_Repos))
     """
@@ -103,10 +103,10 @@ class MkdockyardConfig(base.Config):
     """
     An integer representing the multiplier to apply to the cache limit (default: 2).
 
-    To prevent fetching repos on every build, mkdockyard caches repos in your OS's
-    cache directory (`~/.cache/mkdockyard` on Linux). To prevent this cache getting too
-    large, mkdockyard automatically deletes unused directories when the number of
-    unused directories exceeds the cache limit.
+    To prevent fetching repos on every build, mkdocstrings-multirepo caches repos in
+    your OS's cache directory (`~/.cache/mkdocstrings-multirepo` on Linux). To prevent
+    this cache getting too large, mkdocstrings-multirepo automatically deletes unused
+    directories when the number of unused directories exceeds the cache limit.
 
     The cache limit is defined relative to the number of repos in the configuration,
     multiplied by this multiplier.
@@ -117,19 +117,19 @@ class MkdockyardConfig(base.Config):
     """
 
 
-class MkdockyardPlugin(BasePlugin[MkdockyardConfig]):
+class MkdocstringsMultirepoPlugin(BasePlugin[MkdocstringsMultirepoConfig]):
     """
-    Clones the git repos defined in the MkdockyardConfig into the OS's cache directory,
-    and adds their paths to mkdocstrings `paths` configuration option.
+    Clones the git repos defined in the MkdocstringsMultirepoConfig into the OS's
+    cache directory, and adds their paths to mkdocstrings `paths` configuration option.
     """
 
     def on_config(self, config: MkDocsConfig) -> None:
         """
         Hooks into the mkdocs config loading process, to clone the git repos defined
-        in the MkdockyardConfig into the OS's cache directory, and add their paths to
-        mkdocstrings `paths` configuration option.
+        in the MkdocstringsMultirepoConfig into the OS's cache directory, and add
+        their paths to mkdocstrings `paths` configuration option.
         """
-        cache_dir = Path(user_cache_dir("mkdockyard"))
+        cache_dir = Path(user_cache_dir("mkdocstrings-multirepo"))
         repos = self.config.repos
 
         git_supports_revision = False
@@ -143,9 +143,9 @@ class MkdockyardPlugin(BasePlugin[MkdockyardConfig]):
         if "mkdocstrings" not in plugins:
             defined_plugins = list(plugins.keys())
             raise PluginError(
-                "mkdockyard: Failed to find the key 'mkdocstrings' in your plugin config."
-                " Are you sure you have 'mkdocstrings' defined under `plugins` in"
-                " your `mkdocs.yml`?\n"
+                "mkdocstrings-multirepo: Failed to find the key 'mkdocstrings' in "
+                "your plugin config. Are you sure you have 'mkdocstrings' defined "
+                "under `plugins` in your `mkdocs.yml`?\n"
                 f"Found plugins: {defined_plugins}"
             )
 
@@ -156,7 +156,7 @@ class MkdockyardPlugin(BasePlugin[MkdockyardConfig]):
         with concurrent.futures.ThreadPoolExecutor() as executor:
             future_to_clone = {
                 executor.submit(
-                    self.make_dockyard,
+                    self.prepare_repo,
                     name=info.name,
                     url=info.url,
                     ref=info.ref,
@@ -178,8 +178,8 @@ class MkdockyardPlugin(BasePlugin[MkdockyardConfig]):
                         log.info(f"Fetched '{info.url}' at ref '{info.ref}'")
                 except subprocess.CalledProcessError as e:
                     raise PluginError(
-                        f"mkdockyard: Failed to fetch git URL '{info.url}' for ref"
-                        f" '{info.ref}'. See Git output below:\n"
+                        "mkdocstrings-multirepo: Failed to fetch git URL "
+                        f"'{info.url}' for ref '{info.ref}'. See Git output below:\n"
                         f"{e.stderr}"
                     )
 
@@ -208,8 +208,8 @@ class MkdockyardPlugin(BasePlugin[MkdockyardConfig]):
 
         Git version 2.49 added the `--revision` flag to `git clone`, which allows
         users to fetch a specific ref with one command. Detecting versions that support
-        this flag therefore allows mkdockyard to use this superior approach if it's
-        available.
+        this flag therefore allows mkdocstrings-multirepo to use this superior
+        approach if it's available.
 
         Returns:
             A `tuple[int, int]`, where the first item in the tuple is the major version,
@@ -234,8 +234,9 @@ class MkdockyardPlugin(BasePlugin[MkdockyardConfig]):
         directory (`CloneInformation`), for each repo in the list.
 
         Parameters:
-            repos: A list of repos, as defined in the mkdockyard configuration.
-            cache_dir: The `Path` to mkdockyard's cache directory.
+            repos: A list of repos, as defined in the mkdocstrings-multirepo
+                configuration.
+            cache_dir: The `Path` to mkdocstrings-multirepo's cache directory.
 
         Returns:
             `list[CloneInformation]`.
@@ -268,7 +269,8 @@ class MkdockyardPlugin(BasePlugin[MkdockyardConfig]):
     def subprocess_run_wrapper(args: list[str], cwd: Path) -> None:
         """
         Wrapper around subprocess.run, to allow for reduced repetition of paramaters
-        common across git commands run in `Mkdockyard.clone_git_repo`.
+        common across git commands run in
+        `MkdocstringsMultirepoPlugin.clone_git_repo`.
 
         Parameters:
             args: The list of arguments to pass to `subprocess.run`
@@ -319,20 +321,22 @@ class MkdockyardPlugin(BasePlugin[MkdockyardConfig]):
             return
 
         os.makedirs(output_path)
-        MkdockyardPlugin.subprocess_run_wrapper(args=["git", "init"], cwd=output_path)
-        MkdockyardPlugin.subprocess_run_wrapper(
+        MkdocstringsMultirepoPlugin.subprocess_run_wrapper(
+            args=["git", "init"], cwd=output_path
+        )
+        MkdocstringsMultirepoPlugin.subprocess_run_wrapper(
             args=["git", "remote", "add", "origin", url], cwd=output_path
         )
-        MkdockyardPlugin.subprocess_run_wrapper(
+        MkdocstringsMultirepoPlugin.subprocess_run_wrapper(
             args=["git", "fetch", "--depth", "1", "origin", ref],
             cwd=output_path,
         )
-        MkdockyardPlugin.subprocess_run_wrapper(
+        MkdocstringsMultirepoPlugin.subprocess_run_wrapper(
             args=["git", "checkout", "FETCH_HEAD"], cwd=output_path
         )
 
     @staticmethod
-    def make_dockyard(
+    def prepare_repo(
         url: str,
         ref: str,
         hashed_dir: Path,
@@ -340,14 +344,14 @@ class MkdockyardPlugin(BasePlugin[MkdockyardConfig]):
         git_supports_revision: bool,
     ) -> bool:
         """
-        The core logic for the mkdockyard plugin. This clones the git repo if it
-        doesn't exist, renames it if the repo does exist but changed name, or reuses it
-        if none of the ref/url/name have changed.
+        The core logic for the mkdocstrings-multirepo plugin. This clones the git repo
+        if it doesn't exist, renames it if the repo does exist but changed name, or
+        reuses it if none of the ref/url/name have changed.
 
         The `bool` return value indicates whether the repo was cloned. This is purely
         so cloning can be logged as it occurs, rather than before it occurs, in the
-        main `Mkdockyard.on_config` method. This is necessary as cloning is done using
-        `concurrent.futures`.
+        main `MkdocstringsMultirepoPlugin.on_config` method. This is necessary as
+        cloning is done using `concurrent.futures`.
 
         Parameters:
             url: The `.git` URL of the repo to clone.
@@ -364,7 +368,7 @@ class MkdockyardPlugin(BasePlugin[MkdockyardConfig]):
         """
         output_path = hashed_dir.joinpath(name)
         if not hashed_dir.exists():
-            MkdockyardPlugin.clone_git_repo(
+            MkdocstringsMultirepoPlugin.clone_git_repo(
                 git_supports_revision=git_supports_revision,
                 url=url,
                 ref=ref,
@@ -395,10 +399,10 @@ class MkdockyardPlugin(BasePlugin[MkdockyardConfig]):
         Removes repos currently not in the configuration from the cache.
 
         Parameters:
-            configured_repos: A `list[Path]` of repos currently in the mkdockyard
-            configuration.
+            configured_repos: A `list[Path]` of repos currently in the
+                mkdocstrings-multirepo configuration.
             cached_repos: A `list[Path]` of all repos currently in the cache.
-            cache_dir: The `Path` to mkdockyard's cache directory.
+            cache_dir: The `Path` to mkdocstrings-multirepo's cache directory.
         """
         for repo in cached_repos:
             if repo in configured_repos:
@@ -406,8 +410,8 @@ class MkdockyardPlugin(BasePlugin[MkdockyardConfig]):
 
             if not repo.is_relative_to(cache_dir):
                 raise PluginError(
-                    f"mkdockyard: Almost pruned repo dir {repo}, but it's path is not"
-                    f"relative to {cache_dir}."
+                    "mkdocstrings-multirepo: Almost pruned repo dir "
+                    f"{repo}, but it's path is not relative to {cache_dir}."
                 )
 
             shutil.rmtree(repo)

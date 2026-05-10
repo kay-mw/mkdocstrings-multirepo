@@ -1,13 +1,13 @@
-# Mkdockyard
+# mkdocstrings-multirepo
 
-A simple mkdocs + mkdocstring plugin that allows you to use docs from multiple
-different repos. Simply specify a repo configuration, and your repos are ready
-to dock 🚢
+A simple mkdocs + mkdocstrings plugin that allows you to use docs from multiple
+different repos. Simply specify a repo configuration, and those repos become
+available to mkdocstrings in one docs build.
 
 ## Installation
 
 ```bash
-uv add mkdockyard
+uv add mkdocstrings-multirepo
 ```
 
 **Requirements:** Requires git, [mkdocs](https://www.mkdocs.org/) and
@@ -15,9 +15,9 @@ uv add mkdockyard
 
 > [!IMPORTANT]
 >
-> `mkdockyard` must be listed **before** `mkdocstrings` in your `plugins`
-> configuration, as it needs to set up repository paths before mkdocstrings
-> processes them.
+> `mkdocstrings-multirepo` must be listed **before** `mkdocstrings` in your
+> `plugins` configuration, as it needs to set up repository paths before
+> mkdocstrings processes them.
 
 ## Features
 
@@ -26,7 +26,7 @@ uv add mkdockyard
 - **Reproducibility** - Supports and encourages the use of commit hashes to pin
   specific repo versions
 - **Caching** - Repos are cached in your OS cache directory (e.g.
-  `~/.cache/mkdockyard` on Linux) and reused between builds
+  `~/.cache/mkdocstrings-multirepo` on Linux) and reused between builds
 - **Auto-pruning** - Automatically removes unused cached repos when the cache
   grows too large
 
@@ -35,10 +35,10 @@ uv add mkdockyard
 ```yml
 # mkdocs.yml
 
-site_name: mkdockyard
+site_name: mkdocstrings-multirepo
 
 plugins:
-  - mkdockyard:
+  - mkdocstrings-multirepo:
       repos:
         - name: textual
           url: "https://github.com/Textualize/textual.git"
@@ -57,7 +57,7 @@ plugins:
 
 # Example
 
-<!-- Schema: `::: [name-in-mkdockyard-repos-config].path.to.your.module` -->
+<!-- Schema: `::: [name-in-repos-config].path.to.your.module` -->
 
 ::: textual.src.textual.cache.LRUCache
 
@@ -66,28 +66,22 @@ plugins:
 ::: pydantic.pydantic.networks.UrlConstraints
 ```
 
-![Mkdocs + mkdockyard website example](./static/site_example.png)
+![MkDocs + mkdocstrings-multirepo website example](./static/site_example.png)
 
 ## Limitations
 
-- **Language support** - `mkdockyard` currently only supports the Python parser.
-  Making this language agnostic _seems_ quite simple, so full language support
-  may come in the v0.2 release.
+- **Language support** - `mkdocstrings-multirepo` currently only supports the
+  Python parser. Making this language agnostic _seems_ quite simple, so full
+  language support may come in the v0.2 release.
 
 ## FAQ
 
-### Why does `mkdockyard` notably increase my build times, even when repos are cached?
+### Why does `mkdocstrings-multirepo` notably increase my build times, even when repos are cached?
 
 Including and referencing modules from other repos inherently increases the
 strain on `mkdocstrings`. Large repos with deeply nested references may require
 [griffe](https://github.com/mkdocstrings/griffe?tab=readme-ov-file) (the
-mkdocstrings parser) to recurse 10s, 100s or even 1000s of times depending on
-the number of docstring references in your documentation. Do this across
-multiple repos and you end up with slow build times.
-
-This is unlikely to be a `mkdockyard` problem, as `mkdockyard` only takes
-milliseconds to build when using cached repos (though performance suggestions /
-improvements are always welcome).
+mkdocstrings parser) to recurse a large number of times.
 
 ### Why am I getting "Could not collect" errors when trying to document a cloned repo?
 
@@ -95,9 +89,9 @@ This could be for a variety of reasons, such as not using the correct naming
 scheme, misspelling a path, etc.
 
 One dubious edge case to be aware of is: if you have a package installed in your
-environment (e.g., `mkdockyard` itself) and you're also trying to clone and
-document a repo with the same `name` in your config, you'll encounter name
-collision issues.
+environment (e.g., the `mkdocstrings_multirepo` package itself) and you're also
+trying to clone and document a repo with the same `name` in your config, you'll
+encounter name collision issues.
 
 You can solve this by either:
 
@@ -107,16 +101,22 @@ You can solve this by either:
 
 2. If you _really need_ the package in your `repos` configuration, change the
    name such that it doesn't conflict with the name of any installed packages.
-   For example, to clone and document `mkdockyard` when you also have
-   `mkdockyard` installed, you could do:
+   For example, to clone and document `mkdocstrings-multirepo` when you also
+   have `mkdocstrings-multirepo` installed, you could do:
 
 ```yml
 plugins:
-  - mkdockyard:
+  - mkdocstrings-multirepo:
       repos:
-        - name: mkdockyard_repo # Changed from 'mkdockyard' to avoid collision
-          url: "https://github.com/kay-mw/mkdockyard.git"
+        - name: mkdocstrings_multirepo_repo # Changed to avoid collision
+          url: "https://github.com/kay-mw/mkdocstrings-multirepo.git"
           ref: "main"
 ```
 
-Then reference it as `::: mkdockyard_repo.path.to.some.module`.
+Then reference it as `::: mkdocstrings_multirepo_repo.path.to.some.module`.
+
+### Does this plugin work with [zensical](https://github.com/zensical/zensical)?
+
+Unfortunately not, as this plugin uses the mkdocs plugin API. Zensical doesn't
+appear to have a public plugin/module API yet, however I plan to port this
+plugin to zensical as soon as that becomes possible.

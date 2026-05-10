@@ -1,10 +1,10 @@
-site_name: mkdockyard
+site_name: mkdocstrings-multirepo
 
 theme:
   name: material
 
 plugins:
-  - mkdockyard:
+  - mkdocstrings-multirepo:
       repos:
         - name: textual
           url: "https://github.com/Textualize/textual.git"

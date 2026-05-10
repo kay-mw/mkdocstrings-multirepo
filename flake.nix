@@ -1,5 +1,5 @@
 {
-  description = "mkdocs-multirepo";
+  description = "mkdocstrings-multirepo";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/6308c3b21396534d8aaeac46179c14c439a89b8a";
