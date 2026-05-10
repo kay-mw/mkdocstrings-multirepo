@@ -11,7 +11,7 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     environment:
-      name: testpypi
+      name: pypi
     permissions:
       id-token: write
       contents: read
@@ -38,7 +38,7 @@ jobs:
           path: dist/*
 
       - name: Publish
-        run: uv publish --publish-url https://test.pypi.org/legacy/
+        run: uv publish
 
   release:
     runs-on: ubuntu-latest
@@ -64,5 +64,4 @@ jobs:
             "./dist/mkdocstrings_multirepo-${VERSION}-py3-none-any.whl" \
             "./dist/mkdocstrings_multirepo-${VERSION}.tar.gz" \
             --generate-notes \
-            --verify-tag \
-            --draft
+            --verify-tag
